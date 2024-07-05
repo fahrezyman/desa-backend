@@ -19,12 +19,23 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const user = await User.findByUsername(req.body.username);
-  if (!user) {
-    return res.status(404).send("Username not found.");
+  try {
+    if (!req.body.username || !req.body.password ) {
+      return res.status(400).send("Username and password are required.");
+    }
+
+    const user = await User.findByUsername(req.body.username);
+    if (!user) {
+      return res.status(404).send("Username not found.");
+    }
+
+    if (!bcrypt.compareSync(req.body.password, user.password)) {
+      return res.status(401).send("Invalid password.");
+    }
+
+    res.status(200).send(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while logging in.");
   }
-  if (!bcrypt.compareSync(req.body.password, user.password)) {
-    return res.status(401).send("Invalid password.");
-  }
-  res.status(200).send(user);
 };
